@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # --- CÉLULA 1: MEMORIA (Base de Datos) ---
+  db:
+    image: timescale/timescaledb:latest-pg14
+    restart: always
+    environment:
+      POSTGRES_USER: jaidi
+      POSTGRES_PASSWORD: password_segura_123
+      POSTGRES_DB: agro_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jaidi -d agro_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- CÉLULA 2: CEREBRO VISUAL (n8n) ---
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      # Nota: Por simplicidad, n8n usará su SQLite interno para sus configs,
+      # y conectaremos a Postgres manualmente en el flujo para los datos Agro.
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+
+  # --- CÉLULA 3: WORKER (Tu Python) ---
+  agrobot:
+    build: ./python_worker
+    restart: always
+    environment:
+      - DB_HOST=db
+      - DB_NAME=agro_db
+      - DB_USER=jaidi
+      - DB_PASS=password_segura_123
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./python_worker:/app
+
+  # --- CÉLULA 4: INTERFAZ DB (Adminer) ---
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+      # --- CÉLULA 5: VISUALIZACIÓN (Grafana) ---
+  grafana:
+    image: grafana/grafana:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=jaidi
+      - GF_SECURITY_ADMIN_PASSWORD=password_segura_123
+    depends_on:
+      - db
+    volumes:
+      - ./grafana_data:/var/lib/grafana
