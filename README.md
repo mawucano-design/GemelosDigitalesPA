@@ -1,34 +1,56 @@
-# 🌱 AgroSentinel: Sistema de Monitoreo IoT & Cálculo de VPD
+cat <<EOF > README.md
+# 🌾 AgroSentinel: De "Chatarra" a Agricultura de Precisión
 
-![Dashboard Preview](dashboard-preview.jpg)
+![AgroSentinel Dashboard](dashboard.png)
 
-![Status](https://img.shields.io/badge/Status-Active-success)
-![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
-![Python](https://img.shields.io/badge/Python-ETL-yellow)
-![TimescaleDB](https://img.shields.io/badge/DB-TimeSeries-green)
+> **Estado:** 🟢 Producción (v1.2)
+> **Stack:** Python + Docker + TimescaleDB + Grafana
+> **Desarrollador:** El Mostapha | Ingeniero Agro-Tech
 
-**AgroSentinel** es una solución de arquitectura de microservicios diseñada para la agricultura de precisión. El sistema ingiere datos meteorológicos en tiempo real, calcula indicadores de estrés vegetal (VPD) y alerta sobre riesgos fúngicos (Botrytis/Mildeu).
+---
 
-## 🚀 Arquitectura Técnica
+## 💡 ¿Qué es AgroSentinel?
+**AgroSentinel** es un sistema de **inteligencia artificial y monitoreo climático** capaz de ejecutarse en hardware reciclado (viejas torres, portátiles en desuso).
 
-El proyecto despliega 5 microservicios orquestados mediante **Docker Compose**:
+Su misión es democratizar la tecnología agrícola:
+1.  🤖 **Diagnostica** enfermedades fúngicas y estrés térmico en tiempo real.
+2.  📡 **Conecta** con satélites meteorológicos para obtener datos hiper-locales.
+3.  📊 **Visualiza** KPIs críticos para la toma de decisiones en campo.
 
-* **🐍 AgroBot (Python Worker):** Motor ETL que conecta con la API de Open-Meteo (Datos reales de Dos Hermanas, Sevilla) y procesa la lógica agronómica.
-* **🗄️ TimescaleDB (PostgreSQL):** Base de datos optimizada para series temporales (Time-Series) y alta frecuencia de ingestión.
-* **📊 Grafana:** Visualización avanzada con cálculo matemático de VPD (Déficit de Presión de Vapor) en tiempo real.
-* **⚙️ n8n:** Orquestador de flujos de trabajo y alertas (Backend low-code).
-* **🛠️ Adminer:** Gestión de base de datos vía web.
+## 🚀 Arquitectura "Rock-Solid"
+Diseñado para ser **inmortal**. Si se va la luz, arranca solo. Si falla la red, se recupera.
 
-## 🧠 Lógica Agronómica (Bio-Algorithm)
+* **🧠 AgroBot (Python):** El cerebro optimizado (consume <100MB RAM).
+* **⏱️ TimescaleDB:** Base de datos de alto rendimiento para series temporales.
+* **📈 Grafana:** Panel de control visual (ver captura arriba).
+* **🐳 Docker:** Despliegue idéntico en cualquier máquina del mundo.
 
-El sistema no solo monitorea, **diagnostica**. Implementa la fórmula de *Tetens* para calcular el VPD en tiempo real y clasifica el estado del cultivo:
+## 🛠️ Instalación en 3 Pasos
+Convierte cualquier ordenador en un servidor agrícola en 5 minutos:
 
-* 🔵 **< 0.4 kPa:** Riesgo Fúngico (Humedad excesiva).
-* 🟢 **0.4 - 1.5 kPa:** Zona de Confort (Transpiración óptima).
-* 🔴 **> 1.5 kPa:** Estrés Hídrico (Cierre estomático).
+1.  **Clonar el repositorio:**
+    \`\`\`bash
+    git clone https://github.com/TU_USUARIO/AgroSentinel.git
+    cd AgroSentinel
+    \`\`\`
 
-## 🛠️ Instalación y Uso
+2.  **Configurar tu finca:**
+    \`\`\`bash
+    cp .env.example .env
+    # Edita las coordenadas (LAT/LON) de tus cultivos
+    \`\`\`
 
-1. Clonar el repositorio:
-   ```bash
-   git clone [https://github.com/jaaidi0/AgroSentinel.git](https://github.com/jaaidi0/AgroSentinel.git)
+3.  **Desplegar:**
+    \`\`\`bash
+    docker compose up -d --build
+    \`\`\`
+
+## 🌿 Lógica de Protección
+El sistema vigila tus cultivos 24/7 con algoritmos agronómicos:
+* ✅ **ÓPTIMO:** Condiciones ideales para crecimiento.
+* ⚠️ **ALERTA:** Riesgo de estrés hídrico o calórico.
+* 🚨 **PELIGRO:** Condiciones favorables para **Hongos** o **Heladas**.
+
+---
+*Hecho con código, pasión y hardware reciclado.* ♻️
+EOF
