@@ -1,22 +1,20 @@
-
-### 8. **Código Principal Modernizado** (app/main.py)
-
-```python
-# app/main.py - Versión modernizada
+# app/main.py
 import streamlit as st
-from ui.components import (
-    create_metric_card,
-    create_analysis_tabs,
-    create_sidebar,
-    create_footer
-)
+from ui.styles import inject_custom_css
+from ui.components import create_metric_card, create_sidebar
+from utils.file_processing import procesar_archivo, dividir_parcela_en_zonas
 from core.analysis import SoilAnalyzer
 from core.climate import ClimateAnalyzer
-from utils.file_processing import FileProcessor
-from utils.visualization import MapVisualizer
+from utils.visualization import (
+    crear_mapa_interactivo_esri, 
+    crear_mapa_visualizador_parcela,
+    crear_mapa_estatico,
+    crear_mapa_heatmap_climatico
+)
 import warnings
+warnings.filterwarnings("ignore")
 
-# Configuración inicial
+# Configuración de página
 st.set_page_config(
     page_title="🌴 Analizador Cultivos Digital Twin",
     page_icon="🌱",
@@ -24,21 +22,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS moderno
-st.markdown("""
-<style>
-    .stApp { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .main-header { 
-        background: rgba(255, 255, 255, 0.95); 
-        padding: 1.5rem; 
-        border-radius: 20px;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        backdrop-filter: blur(10px);
-    }
-</style>
-""", unsafe_allow_html=True)
+# Inyectar CSS
+inject_custom_css()
 
-# Título moderno
+# Título
 st.markdown("""
 <div class="main-header">
     <h1 style="color: #2E7D32; margin: 0;">🌱 ANALIZADOR CULTIVOS</h1>
@@ -48,98 +35,124 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Sidebar con componentes modernos
-with st.sidebar:
-    st.markdown("## ⚙️ Configuración")
+# Sidebar
+params = create_sidebar()
+
+# Inicializar session_state
+if 'gdf_original' not in st.session_state:
+    st.session_state.gdf_original = None
+if 'gdf_analisis' not in st.session_state:
+    st.session_state.gdf_analisis = None
+if 'analisis_textura' not in st.session_state:
+    st.session_state.analisis_textura = None
+if 'area_total' not in st.session_state:
+    st.session_state.area_total = 0.0
+if 'analisis_completado' not in st.session_state:
+    st.session_state.analisis_completado = False
+if 'datos_clima' not in st.session_state:
+    st.session_state.datos_clima = {}
+if 'datos_satelitales' not in st.session_state:
+    st.session_state.datos_satelitales = {}
+if 'datos_clima_historicos' not in st.session_state:
+    st.session_state.datos_clima_historicos = {}
+
+# Procesar archivo subido
+if params['uploaded_file'] is not None:
+    with st.spinner("🔄 Procesando archivo geoespacial..."):
+        gdf = procesar_archivo(params['uploaded_file'])
+        if gdf is not None:
+            st.session_state.gdf_original = gdf
+            st.success("✅ Archivo procesado exitosamente")
+
+# Mostrar vista previa de la parcela
+if st.session_state.gdf_original is not None:
+    st.markdown("### 🗺️ Vista previa de la parcela")
+    area_total = SoilAnalyzer.calcular_superficie(st.session_state.gdf_original)
+    st.session_state.area_total = area_total
+    st.metric("📐 Área Total", f"{area_total:.2f} ha")
     
-    uploaded_file = st.file_uploader(
-        "📤 Subir parcela",
-        type=["zip", "kml", "geojson"],
-        help="Formato: Shapefile ZIP, KML o GeoJSON"
+    mapa_parcela = crear_mapa_visualizador_parcela(st.session_state.gdf_original)
+    if mapa_parcela:
+        st_folium(mapa_parcela, width=800, height=500)
+    
+    # Botón para iniciar análisis
+    if st.button("🚀 Iniciar Análisis Completo", type="primary", use_container_width=True):
+        with st.spinner("🔬 Analizando parcela con datos históricos de NASA POWER..."):
+            # Dividir en zonas
+            gdf_zonas = dividir_parcela_en_zonas(st.session_state.gdf_original, params['n_zonas'])
+            gdf_zonas = gdf_zonas.reset_index(drop=True)
+            gdf_zonas['id_zona'] = range(1, len(gdf_zonas) + 1)
+            
+            centroid_total = gdf_zonas.unary_union.centroid
+            
+            # Datos históricos
+            climate_analyzer = ClimateAnalyzer()
+            datos_historicos = climate_analyzer.obtener_datos_nasa_power_historicos(
+                centroid_total.y, centroid_total.x, years=10
+            )
+            st.session_state.datos_clima_historicos = datos_historicos
+            
+            # Análisis de textura
+            soil_analyzer = SoilAnalyzer(params['cultivo'], params['mes_analisis'])
+            gdf_textura = soil_analyzer.analizar_textura_suelo(gdf_zonas)
+            st.session_state.analisis_textura = gdf_textura
+            
+            # Datos climáticos actuales
+            datos_clima = climate_analyzer.obtener_datos_nasa_power(
+                centroid_total.y, centroid_total.x, params['mes_analisis']
+            )
+            st.session_state.datos_clima = datos_clima
+            
+            # Datos satelitales
+            from datetime import datetime
+            fecha_analisis = datetime(datetime.now().year, 
+                                      list(soil_analyzer.factores_mes.keys()).index(params['mes_analisis']) + 1, 15)
+            datos_satelitales = climate_analyzer.obtener_datos_satelitales(
+                centroid_total.y, centroid_total.x, fecha_analisis, params['cultivo']
+            )
+            st.session_state.datos_satelitales = datos_satelitales
+            
+            # Análisis de fertilidad
+            gdf_fertilidad = soil_analyzer.calcular_indices_gee(
+                gdf_zonas, params['analisis_tipo'], params['nutriente'],
+                ndvi_base=datos_satelitales['ndvi'],
+                evi_base=datos_satelitales['evi']
+            )
+            
+            # Potencial de cosecha (solo para palma)
+            if params['cultivo'] == "PALMA_ACEITERA":
+                gdf_fertilidad = soil_analyzer.calcular_potencial_cosecha(
+                    gdf_fertilidad, datos_clima, datos_satelitales, params['cultivo']
+                )
+            
+            st.session_state.gdf_analisis = gdf_fertilidad
+            st.session_state.analisis_completado = True
+            
+            st.success("✅ Análisis completado con éxito")
+
+# Mostrar resultados si el análisis está completado
+if st.session_state.analisis_completado:
+    st.markdown("### 📊 Seleccione el tipo de análisis a visualizar")
+    opcion = st.selectbox(
+        "🔍 Tipo de análisis",
+        ["ANÁLISIS PRINCIPAL (Fertilidad)",
+         "ANÁLISIS DE TEXTURA",
+         "POTENCIAL DE COSECHA (Palma)",
+         "ANÁLISIS CLIMÁTICO (NASA POWER)",
+         "MAPAS CLIMÁTICOS HISTÓRICOS"],
+        key="tipo_analisis"
     )
     
-    cultivo = st.selectbox(
-        "🌱 Cultivo",
-        ["PALMA_ACEITERA", "CACAO", "BANANO"],
-        format_func=lambda x: x.replace("_", " ").title()
-    )
-    
-    # Selector de fecha moderna
-    fecha_analisis = st.date_input(
-        "📅 Fecha de análisis",
-        value=datetime.now(),
-        max_value=datetime.now()
-    )
-    
-    # Slider moderno
-    n_zonas = st.slider(
-        "🔢 Número de zonas",
-        min_value=4,
-        max_value=50,
-        value=16,
-        help="Divide la parcela en zonas homogéneas"
-    )
-    
-    # Botón con ícono
-    if st.button("🚀 Iniciar análisis", type="primary", use_container_width=True):
-        with st.spinner("Analizando..."):
-            # Lógica de análisis aquí
-            pass
+    # Aquí irían las funciones para mostrar cada tipo de análisis
+    # (Deben ser adaptadas del código original)
+    # Por ejemplo:
+    if opcion == "ANÁLISIS PRINCIPAL (Fertilidad)":
+        # Llamar a función que muestra resultados principales
+        pass
+    elif opcion == "ANÁLISIS DE TEXTURA":
+        # Llamar a función que muestra textura
+        pass
+    # ... etc.
 
-# Contenido principal con pestañas
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📊 Dashboard",
-    "🗺️ Mapa Interactivo", 
-    "🌱 Fertilidad",
-    "🌦️ Clima",
-    "📈 Reportes"
-])
-
-with tab1:
-    # Dashboard con métricas modernas
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        create_metric_card("Área Total", "125.5 ha", "+2.3%", "success")
-    with col2:
-        create_metric_card("Fertilidad Media", "0.78", "-0.5%", "warning")
-    with col3:
-        create_metric_card("Precipitación", "156 mm", "+12%", "info")
-    with col4:
-        create_metric_card("Potencial Cosecha", "28 t/ha", "Óptimo", "primary")
-
-with tab2:
-    # Mapa interactivo
-    st.markdown("### 🗺️ Mapa Interactivo")
-    # Aquí iría tu mapa Folium/Plotly
-
-with tab3:
-    # Análisis de fertilidad
-    st.markdown("### 🌱 Análisis de Fertilidad")
-    # Gráficos de fertilidad
-
-with tab4:
-    # Análisis climático
-    st.markdown("### 🌦️ Datos Climáticos")
-    # Gráficos climáticos
-
-with tab5:
-    # Generación de reportes
-    st.markdown("### 📈 Reportes Personalizados")
-    if st.button("📥 Generar Reporte PDF", icon="📄"):
-        with st.spinner("Generando reporte..."):
-            # Lógica de generación de PDF
-            pass
-
-# Footer moderno
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; padding: 2rem;">
-    <p>🌿 <b>Analizador de Cultivos v2.0</b> | Powered by NASA POWER API</p>
-    <p style="font-size: 0.9rem;">
-        © 2024 AgTech Solutions | 
-        <a href="#" style="color: #4CAF50;">Documentación</a> | 
-        <a href="#" style="color: #4CAF50;">API</a> | 
-        <a href="#" style="color: #4CAF50;">GitHub</a>
-    </p>
-</div>
-""", unsafe_allow_html=True)
+# Nota: Las funciones de visualización de resultados (mostrar_resultados_principales, etc.) 
+# deben ser adaptadas y posiblemente movidas a un módulo de presentación o mantenidas aquí.
