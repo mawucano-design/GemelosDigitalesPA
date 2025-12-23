@@ -1,56 +1,29 @@
-cat <<EOF > README.md
-# 🌾 AgroSentinel: De "Chatarra" a Agricultura de Precisión
+# 🌱 Analizador de Cultivos - Digital Twin
 
-![AgroSentinel Dashboard](dashboard.png)
+Aplicación moderna de análisis agrícola con NASA POWER + PlanetScope
 
-> **Estado:** 🟢 Producción (v1.2)
-> **Stack:** Python + Docker + TimescaleDB + Grafana
-> **Desarrollador:** El Mostapha | Ingeniero Agro-Tech
+## 🚀 Características
 
----
+- ✅ Análisis de fertilidad NPK en tiempo real
+- ✅ Mapas interactivos con Esri Satellite
+- ✅ Datos climáticos históricos (10 años)
+- ✅ Potencial de cosecha por zona
+- ✅ Reportes PDF automáticos
+- ✅ Dockerizado y escalable
 
-## 💡 ¿Qué es AgroSentinel?
-**AgroSentinel** es un sistema de **inteligencia artificial y monitoreo climático** capaz de ejecutarse en hardware reciclado (viejas torres, portátiles en desuso).
+## 🐳 Ejecución con Docker
 
-Su misión es democratizar la tecnología agrícola:
-1.  🤖 **Diagnostica** enfermedades fúngicas y estrés térmico en tiempo real.
-2.  📡 **Conecta** con satélites meteorológicos para obtener datos hiper-locales.
-3.  📊 **Visualiza** KPIs críticos para la toma de decisiones en campo.
+```bash
+# Clonar repositorio
+git clone https://github.com/tu-usuario/analizador-cultivos.git
+cd analizador-cultivos
 
-## 🚀 Arquitectura "Rock-Solid"
-Diseñado para ser **inmortal**. Si se va la luz, arranca solo. Si falla la red, se recupera.
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus API keys
 
-* **🧠 AgroBot (Python):** El cerebro optimizado (consume <100MB RAM).
-* **⏱️ TimescaleDB:** Base de datos de alto rendimiento para series temporales.
-* **📈 Grafana:** Panel de control visual (ver captura arriba).
-* **🐳 Docker:** Despliegue idéntico en cualquier máquina del mundo.
+# Ejecutar con Docker Compose
+docker-compose up -d
 
-## 🛠️ Instalación en 3 Pasos
-Convierte cualquier ordenador en un servidor agrícola en 5 minutos:
-
-1.  **Clonar el repositorio:**
-    \`\`\`bash
-    git clone https://github.com/TU_USUARIO/AgroSentinel.git
-    cd AgroSentinel
-    \`\`\`
-
-2.  **Configurar tu finca:**
-    \`\`\`bash
-    cp .env.example .env
-    # Edita las coordenadas (LAT/LON) de tus cultivos
-    \`\`\`
-
-3.  **Desplegar:**
-    \`\`\`bash
-    docker compose up -d --build
-    \`\`\`
-
-## 🌿 Lógica de Protección
-El sistema vigila tus cultivos 24/7 con algoritmos agronómicos:
-* ✅ **ÓPTIMO:** Condiciones ideales para crecimiento.
-* ⚠️ **ALERTA:** Riesgo de estrés hídrico o calórico.
-* 🚨 **PELIGRO:** Condiciones favorables para **Hongos** o **Heladas**.
-
----
-*Hecho con código, pasión y hardware reciclado.* ♻️
-EOF
+# Acceder a la aplicación
+# http://localhost:8501
