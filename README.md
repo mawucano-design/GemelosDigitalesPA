@@ -1,29 +1,43 @@
 # 🌱 Analizador de Cultivos - Digital Twin
 
-Aplicación moderna de análisis agrícola con NASA POWER + PlanetScope
+![Version](https://img.shields.io/badge/version-2.0.0-green)
+![Python](https://img.shields.io/badge/python-3.11-blue)
+![Docker](https://img.shields.io/badge/docker-supported-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## 🚀 Características
+Aplicación moderna de análisis agrícola con integración de NASA POWER API y datos satelitales.
 
-- ✅ Análisis de fertilidad NPK en tiempo real
-- ✅ Mapas interactivos con Esri Satellite
-- ✅ Datos climáticos históricos (10 años)
-- ✅ Potencial de cosecha por zona
-- ✅ Reportes PDF automáticos
-- ✅ Dockerizado y escalable
+## 🚀 Características Principales
 
-## 🐳 Ejecución con Docker
+- ✅ **Análisis de Fertilidad NPK** en tiempo real
+- ✅ **Mapas Interactivos** con capas Esri, OpenStreetMap y Mapbox
+- ✅ **Datos Climáticos Históricos** (10 años de NASA POWER)
+- ✅ **Potencial de Cosecha** por zonas homogéneas
+- ✅ **Reportes PDF/Excel** automáticos
+- ✅ **API REST** integrada (FastAPI)
+- ✅ **Dockerizado** y listo para producción
+- ✅ **Base de Datos** PostgreSQL para persistencia
+- ✅ **Autenticación** de usuarios (opcional)
+
+## 📋 Requisitos Previos
+
+- Docker y Docker Compose instalados
+- Python 3.11+ (para desarrollo local)
+- Clave API de NASA POWER (opcional)
+
+## 🐳 Instalación Rápida con Docker
 
 ```bash
-# Clonar repositorio
+# 1. Clonar el repositorio
 git clone https://github.com/tu-usuario/analizador-cultivos.git
 cd analizador-cultivos
 
-# Configurar variables de entorno
+# 2. Configurar variables de entorno
 cp .env.example .env
-# Editar .env con tus API keys
+# Editar .env con tus configuraciones
 
-# Ejecutar con Docker Compose
+# 3. Construir y ejecutar
 docker-compose up -d
 
-# Acceder a la aplicación
+# 4. Acceder a la aplicación
 # http://localhost:8501
